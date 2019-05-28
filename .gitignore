@@ -3,4 +3,4 @@
 /data
 /models
 /.idea
-src/__pycache__
+/__pycache__/
