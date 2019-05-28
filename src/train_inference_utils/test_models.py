@@ -2,7 +2,7 @@ import pytest
 import tensorflow as tf
 import numpy as np
 
-from models import BasicModel
+from train_inference_utils.models import BasicModel
 
 
 @pytest.fixture
