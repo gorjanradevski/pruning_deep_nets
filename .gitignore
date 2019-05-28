@@ -1,0 +1,6 @@
+/.DS_Store
+/notebooks
+/data
+/models
+/.idea
+src/__pycache__
