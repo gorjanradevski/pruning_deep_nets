@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from basic_utils.constants import num_neurons, num_labels, learning_rate
+from basic_utils.constants import num_neurons, num_labels
 from train_inference_utils.prunings import pruning_factory
 
 
@@ -15,6 +15,9 @@ class BasicModel:
         self.features = features
         self.labels = labels
         self.weight_decay = tf.placeholder_with_default(0.0, None, name="weight_decay")
+        self.learning_rate = tf.placeholder_with_default(
+            0.0001, None, name="learning_rate"
+        )
 
         w0 = pruning_factory(
             pruning_type,
@@ -30,7 +33,7 @@ class BasicModel:
                 features,
                 w0,
                 a_is_sparse=True if pruning_type == "weight_pruning" else False,
-                b_is_sparse=True if pruning_type is not None else False,
+                b_is_sparse=True if pruning_type == "weight_pruning" else False,
             )
         )
         w1 = pruning_factory(
@@ -47,7 +50,7 @@ class BasicModel:
                 out0,
                 w1,
                 a_is_sparse=True if pruning_type == "weight_pruning" else False,
-                b_is_sparse=True if pruning_type is not None else False,
+                b_is_sparse=True if pruning_type == "weight_pruning" else False,
             )
         )
         w2 = pruning_factory(
@@ -64,7 +67,7 @@ class BasicModel:
                 out1,
                 w2,
                 a_is_sparse=True if pruning_type == "weight_pruning" else False,
-                b_is_sparse=True if pruning_type is not None else False,
+                b_is_sparse=True if pruning_type == "weight_pruning" else False,
             )
         )
         w3 = pruning_factory(
@@ -81,7 +84,7 @@ class BasicModel:
                 out2,
                 w3,
                 a_is_sparse=True if pruning_type == "weight_pruning" else False,
-                b_is_sparse=True if pruning_type is not None else False,
+                b_is_sparse=True if pruning_type == "weight_pruning" else False,
             )
         )
         w_project = tf.get_variable(
@@ -92,7 +95,7 @@ class BasicModel:
         logits = tf.matmul(out3, w_project)
 
         self.loss = self.create_loss(logits)
-        self.opt = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
+        self.opt = tf.train.AdamOptimizer(self.learning_rate).minimize(self.loss)
         self.predictions = tf.nn.softmax(logits)
         self.saver_loader = tf.train.Saver(
             tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
@@ -108,7 +111,7 @@ class BasicModel:
             logits: The output logits.
 
         Returns:
-            The final loss
+            The final loss.
 
         """
         loss = tf.reduce_mean(
@@ -146,5 +149,6 @@ class BasicModel:
 
         Returns:
             None
+
         """
         self.saver_loader.save(sess, save_path)

@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def unit_pruning(w: tf.Variable, k: float) -> tf.Variable:
+def weight_pruning(w: tf.Variable, k: float) -> tf.Variable:
     """Performs pruning on a weight matrix w in the following way:
 
     - The absolute value of all elements in the weight matrix are computed.
@@ -33,7 +33,7 @@ def unit_pruning(w: tf.Variable, k: float) -> tf.Variable:
     return w.assign(tf.reshape(w_reshaped * mask, tf.shape(w)))
 
 
-def weight_pruning(w: tf.Variable, k: float) -> tf.Variable:
+def unit_pruning(w: tf.Variable, k: float) -> tf.Variable:
     """Performs pruning on a weight matrix w in the following way:
 
     - The euclidean norm of each column is computed.
@@ -66,6 +66,18 @@ def weight_pruning(w: tf.Variable, k: float) -> tf.Variable:
 
 
 def pruning_factory(pruning_type: str, w: tf.Variable, k: float) -> tf.Variable:
+    """Given a pruning type, a weight matrix and a pruning percentage it will return the
+    pruned or non pruned weight matrix.
+
+    Args:
+        pruning_type: How to prune the weight matrix.
+        w: The weight matrix.
+        k: The pruning percentage.
+
+    Returns:
+        The pruned or not pruned (if pruning_type == None) weight matrix.
+
+    """
     if pruning_type is None:
         return w
     elif pruning_type == "weight_pruning":

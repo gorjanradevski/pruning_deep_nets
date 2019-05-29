@@ -1,11 +1,12 @@
 import tensorflow as tf
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from basic_utils.constants import width, height, num_labels, num_prefetch
 
 
 class BaseLoader(ABC):
     def __init__(self, batch_size: int):
+        """A based loader from which all loaders should inherit."""
         self.batch_size = batch_size
 
     @staticmethod
@@ -30,6 +31,8 @@ class BaseLoader(ABC):
 
 
 class TrainValLoader(BaseLoader):
+    """A data loader used for training."""
+
     def __init__(self, x_train, y_train, x_val, y_val, batch_size: int):
         super().__init__(batch_size)
         # Create the training dataset
@@ -79,6 +82,8 @@ class TrainValLoader(BaseLoader):
 
 
 class TestLoader(BaseLoader):
+    """A data loader used for inference performed on the test set."""
+
     def __init__(self, x_test, y_test, batch_size):
         super().__init__(batch_size)
         # Create the validation dataset

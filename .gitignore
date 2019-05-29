@@ -1,6 +1,5 @@
 /.DS_Store
-/notebooks
-/data
-/models
+/notebooks/.ipynb_checkpoints
 /.idea
+/models
 /src/**/__pycache__/

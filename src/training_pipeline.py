@@ -4,7 +4,7 @@ from tqdm import tqdm
 import logging
 import os
 
-from basic_utils.constants import train_size, weight_decay
+from basic_utils.constants import train_size
 from train_inference_utils.loaders import TrainValLoader
 from train_inference_utils.models import BasicModel
 from train_inference_utils.evaluator import Evaluator
@@ -15,14 +15,22 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 tf.logging.set_verbosity(tf.logging.ERROR)
 
 
-def train(batch_size: int, epochs: int, save_model_path: str) -> None:
+def train(
+    weight_decay: float,
+    learning_rate: float,
+    batch_size: int,
+    epochs: int,
+    save_model_path: str,
+) -> None:
     """Performs training of the model. Additionally, it saves the model only when the
     accuracy on the validation set is the highest so far.
 
     Args:
         batch_size: The size of the batch to use.
         epochs: The number of epochs to train the model.
-        save_model_path: Where to save the model
+        save_model_path: Where to save the model.
+        weight_decay: The amount of weight decay to use when training.
+        learning_rate: The learning rate to use when training the model.
 
     Returns:
         None
@@ -34,7 +42,6 @@ def train(batch_size: int, epochs: int, save_model_path: str) -> None:
     x_val, y_val = x_train[train_size:], y_train[train_size:]
     x_train, y_train = x_train[:train_size], y_train[:train_size]
     logger.info("Data prepared...")
-
     # Reset the default graph and set the random seed
     tf.reset_default_graph()
     # Fixing the random seed
@@ -65,7 +72,10 @@ def train(batch_size: int, epochs: int, save_model_path: str) -> None:
                     while True:
                         _, loss, labels = sess.run(
                             [model.opt, model.loss, model.labels],
-                            feed_dict={model.weight_decay: weight_decay},
+                            feed_dict={
+                                model.weight_decay: weight_decay,
+                                model.learning_rate: learning_rate,
+                            },
                         )
                         pbar.update(len(labels))
                         pbar.set_postfix({"Batch loss": loss})
@@ -100,7 +110,13 @@ def main():
     # Without the main sentinel, the code would be executed even if the script were
     # imported as a module.
     args = parse_args()
-    train(args.batch_size, args.epochs, args.save_model_path)
+    train(
+        args.weight_decay,
+        args.learning_rate,
+        args.batch_size,
+        args.epochs,
+        args.save_model_path,
+    )
 
 
 def parse_args():
@@ -123,6 +139,15 @@ def parse_args():
         type=str,
         default="models/best_model",
         help="Where to save the best model.",
+    )
+    parser.add_argument(
+        "--weight_decay", type=float, default=0.0, help="The amount of weight decay"
+    )
+    parser.add_argument(
+        "--learning_rate",
+        type=float,
+        default=0.00001,
+        help="The amount of weight decay",
     )
 
     return parser.parse_args()
