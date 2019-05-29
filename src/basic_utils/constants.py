@@ -16,3 +16,9 @@ num_neurons = [1000, 1000, 500, 200]
 
 # The learning rate used to train the model
 learning_rate = 0.0001
+
+# Testing with prunning for
+prune_k = [0.0, 0.25, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.97, 0.99]
+
+# Prune types
+prune_types = ["unit_pruning", "weight_pruning"]

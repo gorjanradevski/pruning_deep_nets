@@ -8,6 +8,7 @@ import argparse
 from train_inference_utils.loaders import TestLoader
 from train_inference_utils.evaluator import Evaluator
 from train_inference_utils.models import BasicModel
+from basic_utils.constants import prune_k, prune_types
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,8 +16,9 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 tf.logging.set_verbosity(tf.logging.ERROR)
 
 
-def inference(batch_size, load_model_path):
-    """Performs inference on the test set of the MNIST dataset.
+def inference(batch_size: int, load_model_path: str):
+    """Performs inference on the test set of the MNIST dataset while going through both
+    pruning schemes with different pruning coefficient.
 
     Args:
         batch_size: The size of the batch to use.
@@ -30,44 +32,46 @@ def inference(batch_size, load_model_path):
     (_, _), (x_test, y_test) = mnist.load_data()
     logger.info("Data prepared...")
 
-    # Reset the default graph and set the random seed
-    tf.reset_default_graph()
-    # Fixing the random seed
-    tf.set_random_seed(42)
+    for prune_type in prune_types:
+        for k in prune_k:
+            # Reset the default graph and set the random seed
+            tf.reset_default_graph()
+            # Fixing the random seed
+            tf.set_random_seed(42)
 
-    # Create the data loader
-    loader = TestLoader(x_test, y_test, batch_size)
-    features, labels = loader.get_next()
-    logger.info("Loader created...")
+            # Create the data loader
+            loader = TestLoader(x_test, y_test, batch_size)
+            features, labels = loader.get_next()
+            logger.info("Loader created...")
 
-    # Create the model
-    model = BasicModel(features, labels)
-    logger.info("Model created...")
+            # Create the model
+            model = BasicModel(features, labels, prune_type, k)
+            logger.info("Model created...")
 
-    # Create evaluator
-    test_evaluator = Evaluator()
+            # Create evaluator
+            test_evaluator = Evaluator()
 
-    with tf.Session() as sess:
-        # Intialize the graph and set the best loss
-        model.init(sess, load_model_path)
+            with tf.Session() as sess:
+                # Intialize the graph and set the best loss
+                model.init(sess, load_model_path)
 
-        try:
-            with tqdm(total=len(y_test)) as pbar:
-                while True:
-                    loss, labels, predictions = sess.run(
-                        [model.loss, model.labels, model.predictions]
-                    )
-                    pbar.update(len(labels))
-                    test_evaluator.update_metrics(loss, labels, predictions)
-        except tf.errors.OutOfRangeError:
-            pass
+                try:
+                    with tqdm(total=len(y_test)) as pbar:
+                        while True:
+                            loss, labels, predictions = sess.run(
+                                [model.loss, model.labels, model.predictions]
+                            )
+                            pbar.update(len(labels))
+                            test_evaluator.update_metrics(loss, labels, predictions)
+                except tf.errors.OutOfRangeError:
+                    pass
 
-        test_evaluator.update_best_accuracy()
+                test_evaluator.update_best_accuracy()
 
-        logger.info(
-            f"The models accuracy on the MNIST dataset is: "
-            f"{test_evaluator.best_accuracy}"
-        )
+                logger.info(
+                    f"The accuracy for {prune_type} with {k} removal on the MNIST"
+                    f"dataset is: {test_evaluator.best_accuracy}"
+                )
 
 
 def main():

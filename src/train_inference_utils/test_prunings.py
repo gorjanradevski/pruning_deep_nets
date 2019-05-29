@@ -2,7 +2,7 @@ import pytest
 import tensorflow as tf
 import numpy as np
 
-from train_inference_utils.models import BasicModel
+from train_inference_utils.prunings import unit_pruning, weight_pruning
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ def test_basic_unit_prune(
     simple_weight_matrix, k_unit_prune, unit_pruned_simple_weight_matrix
 ):
 
-    pruned_w = BasicModel.unit_pruning(simple_weight_matrix, k_unit_prune)
+    pruned_w = unit_pruning(simple_weight_matrix, k_unit_prune)
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         np.testing.assert_equal(sess.run(pruned_w), unit_pruned_simple_weight_matrix)
@@ -48,14 +48,14 @@ def test_basic_unit_prune(
 def test_basic_weight_prune(
     simple_weight_matrix, k_weight_prune, weight_pruned_simple_weight_matrix
 ):
-    pruned_w = BasicModel.weight_pruning(simple_weight_matrix, k_weight_prune)
+    pruned_w = weight_pruning(simple_weight_matrix, k_weight_prune)
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         np.testing.assert_equal(sess.run(pruned_w), weight_pruned_simple_weight_matrix)
 
 
 def test_complex_weight_prune(complex_weight_matrix, k_weight_prune):
-    pruned_w = BasicModel.weight_pruning(complex_weight_matrix, k_weight_prune)
+    pruned_w = weight_pruning(complex_weight_matrix, k_weight_prune)
     summed = tf.reduce_sum(pruned_w, axis=0)
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
@@ -63,7 +63,7 @@ def test_complex_weight_prune(complex_weight_matrix, k_weight_prune):
 
 
 def test_complex_unit_prune(complex_weight_matrix, k_unit_prune):
-    pruned_w = BasicModel.unit_pruning(complex_weight_matrix, k_unit_prune)
+    pruned_w = unit_pruning(complex_weight_matrix, k_unit_prune)
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         assert np.count_nonzero(sess.run(pruned_w)) == 66
