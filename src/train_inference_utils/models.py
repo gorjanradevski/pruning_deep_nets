@@ -10,10 +10,11 @@ class BasicModel:
         features: tf.Tensor,
         labels: tf.Tensor,
         pruning_type: str = None,
-        k: float = 0,
+        k: float = 0.0,
     ):
         self.features = features
         self.labels = labels
+        self.weight_decay = tf.placeholder_with_default(0.0, None, name="weight_decay")
 
         w0 = pruning_factory(
             pruning_type,
@@ -24,7 +25,14 @@ class BasicModel:
             ),
             k,
         )
-        out0 = tf.nn.relu(tf.matmul(features, w0))
+        out0 = tf.nn.relu(
+            tf.matmul(
+                features,
+                w0,
+                a_is_sparse=True if pruning_type == "weight_pruning" else False,
+                b_is_sparse=True if pruning_type is not None else False,
+            )
+        )
         w1 = pruning_factory(
             pruning_type,
             tf.get_variable(
@@ -34,7 +42,14 @@ class BasicModel:
             ),
             k,
         )
-        out1 = tf.nn.relu(tf.matmul(out0, w1))
+        out1 = tf.nn.relu(
+            tf.matmul(
+                out0,
+                w1,
+                a_is_sparse=True if pruning_type == "weight_pruning" else False,
+                b_is_sparse=True if pruning_type is not None else False,
+            )
+        )
         w2 = pruning_factory(
             pruning_type,
             tf.get_variable(
@@ -44,7 +59,14 @@ class BasicModel:
             ),
             k,
         )
-        out2 = tf.nn.relu(tf.matmul(out1, w2))
+        out2 = tf.nn.relu(
+            tf.matmul(
+                out1,
+                w2,
+                a_is_sparse=True if pruning_type == "weight_pruning" else False,
+                b_is_sparse=True if pruning_type is not None else False,
+            )
+        )
         w3 = pruning_factory(
             pruning_type,
             tf.get_variable(
@@ -54,7 +76,14 @@ class BasicModel:
             ),
             k,
         )
-        out3 = tf.nn.relu(tf.matmul(out2, w3))
+        out3 = tf.nn.relu(
+            tf.matmul(
+                out2,
+                w3,
+                a_is_sparse=True if pruning_type == "weight_pruning" else False,
+                b_is_sparse=True if pruning_type is not None else False,
+            )
+        )
         w_project = tf.get_variable(
             shape=[num_neurons[3], num_labels],
             initializer=tf.glorot_uniform_initializer(),
@@ -62,12 +91,35 @@ class BasicModel:
         )
         logits = tf.matmul(out3, w_project)
 
-        self.loss = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits_v2(self.labels, logits)
-        )
+        self.loss = self.create_loss(logits)
         self.opt = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
         self.predictions = tf.nn.softmax(logits)
-        self.saver_loader = tf.train.Saver()
+        self.saver_loader = tf.train.Saver(
+            tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+        )
+
+    def create_loss(self, logits: tf.Tensor) -> tf.Tensor:
+        """Creates an OP used to compute the loss.
+
+        - Computes the cross-entropy loss between the logits and the labels.
+        - Adds the L2 loss to prevent having weights of large magnitude.
+
+        Args:
+            logits: The output logits.
+
+        Returns:
+            The final loss
+
+        """
+        loss = tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits_v2(self.labels, logits)
+        )
+        l2 = (
+            tf.add_n([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
+            * self.weight_decay
+        )
+
+        return loss + l2
 
     def init(self, sess: tf.Session, checkpoint_path: str = None) -> None:
         """Initializes all variables in the graph. Additionally, if a checkpoint is

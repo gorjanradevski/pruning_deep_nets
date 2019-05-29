@@ -69,9 +69,12 @@ def inference(batch_size: int, load_model_path: str):
                 test_evaluator.update_best_accuracy()
 
                 logger.info(
-                    f"The accuracy for {prune_type} with {k} removal on the MNIST"
+                    f"The accuracy for {prune_type} with {k} removal on the MNIST "
                     f"dataset is: {test_evaluator.best_accuracy}"
                 )
+
+            if prune_type is None:
+                break
 
 
 def main():

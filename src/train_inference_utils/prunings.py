@@ -23,7 +23,9 @@ def unit_pruning(w: tf.Variable, k: float) -> tf.Variable:
     w_reshaped = tf.reshape(w, [-1])
     _, indices = tf.nn.top_k(tf.negative(tf.abs(w_reshaped)), k, sorted=True, name=None)
     mask = tf.scatter_nd_update(
-        tf.Variable(tf.ones_like(w_reshaped, dtype=tf.float32)),
+        tf.Variable(
+            tf.ones_like(w_reshaped, dtype=tf.float32), name="mask", trainable=False
+        ),
         tf.reshape(indices, [-1, 1]),
         tf.zeros([k], tf.float32),
     )

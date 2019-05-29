@@ -4,7 +4,7 @@ from tqdm import tqdm
 import logging
 import os
 
-from basic_utils.constants import train_size
+from basic_utils.constants import train_size, weight_decay
 from train_inference_utils.loaders import TrainValLoader
 from train_inference_utils.models import BasicModel
 from train_inference_utils.evaluator import Evaluator
@@ -64,7 +64,8 @@ def train(batch_size: int, epochs: int, save_model_path: str) -> None:
                 with tqdm(total=len(y_train)) as pbar:
                     while True:
                         _, loss, labels = sess.run(
-                            [model.opt, model.loss, model.labels]
+                            [model.opt, model.loss, model.labels],
+                            feed_dict={model.weight_decay: weight_decay},
                         )
                         pbar.update(len(labels))
                         pbar.set_postfix({"Batch loss": loss})
