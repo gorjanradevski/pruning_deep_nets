@@ -32,7 +32,6 @@ class BasicModel:
             tf.matmul(
                 features,
                 w0,
-                a_is_sparse=True if pruning_type == "weight_pruning" else False,
                 b_is_sparse=True if pruning_type == "weight_pruning" else False,
             )
         )
