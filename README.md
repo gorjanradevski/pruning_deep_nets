@@ -1,4 +1,4 @@
-# FOR.ai challenge
+# Prunning of deep neural networks
 
 ### Reproducing the virtualenv:
 
