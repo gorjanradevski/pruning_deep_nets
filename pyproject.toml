@@ -6,7 +6,7 @@ authors = ["gorjanradevski <gorjanradevski@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-tensorflow = "^1.15"
+tensorflow = "^2.3"
 jupyter = "^1.0"
 tqdm = "^4.32"
 matplotlib = "^3.1"
